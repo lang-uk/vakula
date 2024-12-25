@@ -278,10 +278,16 @@ def main():
     parser.add_argument(
         "--target-lang", default="uk", help="Target language code (default: uk)"
     )
+    parser.add_argument(
+        "--raw-data-dir",
+        type=pathlib.Path,
+        default="raw_data",
+        help="Directory to store downloaded files (default: raw_data)",
+    )
     args = parser.parse_args()
 
     # Create directories
-    raw_data_dir = pathlib.Path("raw_data")
+    raw_data_dir = pathlib.Path(args.raw_data_dir)
     raw_data_dir.mkdir(exist_ok=True)
 
     # Get TMX links
