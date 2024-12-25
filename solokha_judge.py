@@ -83,12 +83,13 @@ def read_translations(
 
 
 def evaluate_batch(
-    gpu_id: int, model_name: str, batch: List[Dict[str, str]], batch_size: int
+    gpu_id: int, model, model_name: str, batch: List[Dict[str, str]], batch_size: int
 ) -> List[Dict[str, float]]:
     """Evaluate a batch of translations using COMET model.
 
     Args:
         gpu_id: GPU device ID to use.
+        model: Name of the COMET model to use.
         model_name: Name of the COMET model to use.
         batch: List of translation pairs to evaluate.
         batch_size: Batch size for model inference.
@@ -96,9 +97,6 @@ def evaluate_batch(
     Returns:
         List of dictionaries containing hashes and scores.
     """
-    torch.cuda.set_device(gpu_id)
-    model = load_from_checkpoint(model_name)
-    model.eval()
 
     data = {
         "src": [pair["source"] for pair in batch],
@@ -130,6 +128,7 @@ def evaluate_worker(
     input_queue: mp.Queue,
     output_queue: mp.Queue,
     model_path: str,
+    model_name: str,
     eval_batch_size: int,
 ):
     """Worker process for parallel evaluation.
@@ -139,15 +138,26 @@ def evaluate_worker(
         input_queue: Queue for receiving translation batches.
         output_queue: Queue for sending evaluation results.
         model_path: Path of the COMET model to use.
+        model_name: Name of the COMET model to use.
         eval_batch_size: Batch size for model inference.
     """
+    torch.cuda.set_device(gpu_id)
+    model = load_from_checkpoint(model_path)
+    model.eval()
+
     try:
         while True:
             batch = input_queue.get()
             if batch is None:  # Poison pill
                 break
 
-            scores = evaluate_batch(gpu_id, model_path, batch, eval_batch_size)
+            scores = evaluate_batch(
+                gpu_id=gpu_id,
+                model=model,
+                model_name=model_name,
+                batch=batch,
+                batch_size=eval_batch_size,
+            )
             output_queue.put(scores)
     except Exception as e:
         output_queue.put(f"Error in worker {gpu_id}: {str(e)}")
@@ -225,7 +235,14 @@ def main():
     for gpu_id in args.gpus:
         worker = mp.Process(
             target=evaluate_worker,
-            args=(gpu_id, input_queue, output_queue, model_path, args.eval_batch_size),
+            args=(
+                gpu_id,
+                input_queue,
+                output_queue,
+                model_path,
+                args.model,
+                args.eval_batch_size,
+            ),
         )
         worker.start()
         workers.append(worker)
