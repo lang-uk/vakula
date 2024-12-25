@@ -84,8 +84,8 @@ def evaluate_batch(
     model,
     model_name: str,
     batch: List[Dict[str, str]],
+    gpus: int,
     eval_batch_size: int = 8,
-    gpus: List[int],
 ) -> List[Dict[str, float]]:
     """Evaluate a batch of translations using COMET model.
 
@@ -94,7 +94,7 @@ def evaluate_batch(
         model_name: Name of the COMET model.
         batch: List of translation pairs to evaluate.
         eval_batch_size: Batch size for model inference.
-        gpus: List of GPU device IDs to use.
+        gpus: Number of GPUs to use.
 
     Returns:
         List of dictionaries containing hashes and scores.
@@ -146,9 +146,8 @@ def main():
     parser.add_argument(
         "--gpus",
         type=int,
-        nargs="+",
-        required=True,
-        help="GPU device IDs to use",
+        default=0,
+        help="Number of GPU devices to use (0 for auto)",
     )
     parser.add_argument(
         "--read-batch-size",
