@@ -67,9 +67,10 @@ def read_translations(
 
             pair = {
                 "hash": data["hash"],
-                "source": data[src_lang_field],
-                "hypothesis": data[tgt_lang_field],
+                "src": data[src_lang_field],
+                "mt": data[tgt_lang_field],
             }
+            processed_hashes.add(data["hash"])
 
             current_batch.append(pair)
             if len(current_batch) >= batch_size:
@@ -216,6 +217,7 @@ def main():
 
         except Exception as e:
             print(f"Error during evaluation: {str(e)}")
+            raise e
 
 
 if __name__ == "__main__":
