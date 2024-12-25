@@ -100,13 +100,9 @@ def evaluate_batch(
     Returns:
         List of dictionaries containing hashes and scores.
     """
-    data = {
-        "src": [pair["source"] for pair in batch],
-        "mt": [pair["hypothesis"] for pair in batch],
-    }
 
     with torch.no_grad():
-        batch_scores = model.predict(data, batch_size=eval_batch_size, gpus=gpus)
+        batch_scores = model.predict(batch, batch_size=eval_batch_size, gpus=gpus)
 
     return [
         {
