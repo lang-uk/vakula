@@ -129,7 +129,7 @@ def evaluate_worker(
     gpu_id: int,
     input_queue: mp.Queue,
     output_queue: mp.Queue,
-    model_name: str,
+    model_path: str,
     eval_batch_size: int,
 ):
     """Worker process for parallel evaluation.
@@ -138,7 +138,7 @@ def evaluate_worker(
         gpu_id: GPU device ID to use.
         input_queue: Queue for receiving translation batches.
         output_queue: Queue for sending evaluation results.
-        model_name: Name of the COMET model to use.
+        model_path: Path of the COMET model to use.
         eval_batch_size: Batch size for model inference.
     """
     try:
@@ -147,7 +147,7 @@ def evaluate_worker(
             if batch is None:  # Poison pill
                 break
 
-            scores = evaluate_batch(gpu_id, model_name, batch, eval_batch_size)
+            scores = evaluate_batch(gpu_id, model_path, batch, eval_batch_size)
             output_queue.put(scores)
     except Exception as e:
         output_queue.put(f"Error in worker {gpu_id}: {str(e)}")
@@ -172,7 +172,11 @@ def main():
     )
     parser.add_argument(
         "--model",
-        choices=["Unbabel/wmt23-cometkiwi-da-xxl", "Unbabel/wmt23-cometkiwi-da-xl"],
+        choices=[
+            "Unbabel/wmt23-cometkiwi-da-xxl",
+            "Unbabel/wmt22-cometkiwi-da",
+            "Unbabel/wmt23-cometkiwi-da-xl",
+        ],
         required=True,
         help="COMET model to use",
     )
@@ -209,7 +213,7 @@ def main():
 
     # Download model in the main process
     print(f"Downloading model {args.model}...")
-    download_model(args.model)
+    model_path = download_model(args.model)
 
     # Initialize multiprocessing queues
     mp.set_start_method("spawn", force=True)
@@ -221,7 +225,7 @@ def main():
     for gpu_id in args.gpus:
         worker = mp.Process(
             target=evaluate_worker,
-            args=(gpu_id, input_queue, output_queue, args.model, args.eval_batch_size),
+            args=(gpu_id, input_queue, output_queue, model_path, args.eval_batch_size),
         )
         worker.start()
         workers.append(worker)
