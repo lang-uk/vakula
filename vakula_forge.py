@@ -128,8 +128,58 @@ def parse_xml_file(file_path: str) -> Generator[Dict[str, str], None, None]:
     Returns:
         An iterator over sentence pairs in different languages.
     """
+
+    class CleanReader:
+        def __init__(self, file_obj):
+            self.file_obj = file_obj
+            self.buffer = ""
+
+        def read(self, size=-1):
+            chunk = self.file_obj.read(size)
+            if chunk:
+                return (
+                    chunk.replace("\x00", "")
+                    .replace("\x01", "")
+                    .replace("\x02", "")
+                    .replace("\x03", "")
+                    .replace("\x04", "")
+                    .replace("\x05", "")
+                    .replace("\x06", "")
+                    .replace("\x07", "")
+                    .replace("\x08", "")
+                    .replace("\x09", "")
+                    # .replace("\x0a", "")
+                    .replace("\x0b", "")
+                    .replace("\x0c", "")
+                    .replace("\x0e", "")
+                    .replace("\x0f", "")
+                    .replace("\x10", "")
+                    .replace("\x11", "")
+                    .replace("\x12", "")
+                    .replace("\x13", "")
+                    .replace("\x14", "")
+                    .replace("\x15", "")
+                    .replace("\x16", "")
+                    .replace("\x17", "")
+                    .replace("\x18", "")
+                    .replace("\x19", "")
+                    .replace("\x1a", "")
+                    .replace("\x1b", "")
+                    .replace("\x1c", "")
+                    .replace("\x1d", "")
+                    .replace("\x1e", "")
+                    .replace("\x1f", "")
+                    .replace("\ufffe", "")
+                )
+            return chunk
+
+        def close(self):
+            self.file_obj.close()
+
     input_file = smart_open.open(file_path, "r", encoding="utf-8")
-    context = ET.iterparse(input_file, events=("end",))
+    filtered_file = CleanReader(input_file)
+
+    context = ET.iterparse(filtered_file, events=("end",))
 
     for _, elem in context:
         if elem.tag == "tu":
@@ -236,7 +286,11 @@ def main():
 
     # Get TMX links
     try:
-        tmx_info = get_tmx_links(args.url, args.source_lang, args.target_lang)
+        tmx_info = [
+            x
+            for x in get_tmx_links(args.url, args.source_lang, args.target_lang)
+            if "CCMatrix" in x["name"]
+        ]
         print(f"Found {len(tmx_info)} TMX files to process")
     except (requests.RequestException, json.JSONDecodeError, ValueError) as e:
         print(f"Error getting TMX links: {e}")
