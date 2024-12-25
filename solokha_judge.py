@@ -184,6 +184,7 @@ def main():
     print(f"Downloading model {args.model}...")
     model_path = download_model(args.model)
     model = load_from_checkpoint(model_path)
+    model = model.cuda()
     model.eval()
 
     # Process translations
