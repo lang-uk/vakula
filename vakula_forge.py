@@ -286,11 +286,7 @@ def main():
 
     # Get TMX links
     try:
-        tmx_info = [
-            x
-            for x in get_tmx_links(args.url, args.source_lang, args.target_lang)
-            if "CCMatrix" in x["name"]
-        ]
+        tmx_info = get_tmx_links(args.url, args.source_lang, args.target_lang)
         print(f"Found {len(tmx_info)} TMX files to process")
     except (requests.RequestException, json.JSONDecodeError, ValueError) as e:
         print(f"Error getting TMX links: {e}")
