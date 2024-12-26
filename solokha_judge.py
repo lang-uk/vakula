@@ -109,7 +109,7 @@ def evaluate_batch(
             "hash": pair["hash"],
             f"{model_name.split('/')[-1]}_score": float(score),
         }
-        for pair, score in zip(batch, batch_scores)
+        for pair, score in zip(batch, batch_scores["scores"])
     ]
 
 
