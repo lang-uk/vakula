@@ -12,6 +12,7 @@ quality using specified COMET models, and outputs scores using multiple GPUs.
 import argparse
 import json
 import pathlib
+from multiprocessing import cpu_count
 from typing import Dict, Generator, List, Set
 import torch
 from comet import download_model, load_from_checkpoint
@@ -102,7 +103,9 @@ def evaluate_batch(
     """
 
     with torch.no_grad():
-        batch_scores = model.predict(batch, batch_size=eval_batch_size, gpus=gpus)
+        batch_scores = model.predict(
+            batch, batch_size=eval_batch_size, gpus=gpus, num_workers=cpu_count()
+        )
 
     return [
         {
