@@ -12,6 +12,7 @@ quality using specified COMET models, and outputs scores using multiple GPUs.
 import argparse
 import json
 import pathlib
+import filelock
 from multiprocessing import cpu_count
 from typing import Dict, Generator, List, Set
 import torch
@@ -31,10 +32,12 @@ def read_processed_hashes(output_file: pathlib.Path) -> Set[str]:
     """
     processed_hashes = set()
     if output_file.exists():
-        with smart_open.open(output_file, "r", encoding="utf-8") as f:
-            for line in f:
-                data = json.loads(line)
-                processed_hashes.add(data["hash"])
+        lock = filelock.FileLock(str(output_file) + ".lock")
+        with lock:
+            with smart_open.open(output_file, "r", encoding="utf-8") as f:
+                for line in f:
+                    data = json.loads(line)
+                    processed_hashes.add(data["hash"])
     return processed_hashes
 
 
@@ -116,6 +119,20 @@ def evaluate_batch(
     ]
 
 
+def write_scores(output_file: pathlib.Path, scores: List[Dict[str, float]]):
+    """Write scores to output file with file locking.
+
+    Args:
+        output_file: Path to the output file.
+        scores: List of score dictionaries to write.
+    """
+    lock = filelock.FileLock(str(output_file) + ".lock")
+    with lock:
+        with smart_open.open(output_file, "a", encoding="utf-8") as f:
+            for score in scores:
+                f.write(json.dumps(score, ensure_ascii=False) + "\n")
+
+
 def main():
     """Main function to orchestrate translation quality evaluation."""
     parser = argparse.ArgumentParser(
@@ -171,7 +188,16 @@ def main():
         default="uk",
         help="Field name for target text in input file (default: uk)",
     )
+    parser.add_argument(
+        "--precision",
+        choices=["highest", "high", "medium"],
+        default="highest",
+        help="Float32 matmul precision (default: highest)",
+    )
     args = parser.parse_args()
+
+    # Set float32 matmul precision
+    torch.set_float32_matmul_precision(args.precision)
 
     # Create output directory if needed
     args.output.parent.mkdir(parents=True, exist_ok=True)
@@ -207,11 +233,8 @@ def main():
                     gpus=args.gpus,
                 )
 
-                # Write scores
-                with smart_open.open(args.output, "a", encoding="utf-8") as f:
-                    for score in scores:
-                        f.write(json.dumps(score, ensure_ascii=False) + "\n")
-
+                # Write scores with locking
+                write_scores(args.output, scores)
                 pbar.update(len(scores))
 
         except Exception as e:

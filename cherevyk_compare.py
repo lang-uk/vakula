@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
-# cherevyk.py - compares two sets of scores like Cherevyk comparing suitors
+# cherevyk.py - compares two sets of scores and generates a histogram
+# to show the impact of the matmul precision change on the scores
 
 """
 Script for analyzing differences between two sets of model scores.
@@ -81,20 +82,44 @@ def calculate_statistics(differences: List[float]) -> Dict[str, float]:
     }
 
 
-def save_histogram(differences: List[float], output_file: pathlib.Path, bins: int = 50):
-    """Generate and save a histogram of differences.
+def save_histograms(
+    differences: List[float],
+    output_full: pathlib.Path,
+    output_filtered: pathlib.Path,
+    bins: int = 50,
+):
+    """Generate and save two histograms of differences - full and without the largest bin.
 
     Args:
         differences: List of score differences.
-        output_file: Path to save the histogram.
+        output_full: Path to save the full histogram.
+        output_filtered: Path to save the filtered histogram.
         bins: Number of histogram bins.
     """
+    # Generate full histogram first to get bin information
     plt.figure(figsize=(10, 6))
-    plt.hist(differences, bins=bins, edgecolor="black")
-    plt.title("Distribution of Score Differences")
+    hist_values, bin_edges, _ = plt.hist(differences, bins=bins, edgecolor="black")
+    plt.title("Distribution of Score Differences (All Data)")
     plt.xlabel("Absolute Difference")
     plt.ylabel("Count")
-    plt.savefig(output_file)
+    plt.savefig(output_full)
+    plt.close()
+
+    # Find the largest bin
+    max_bin_idx = np.argmax(hist_values)
+    bin_start = bin_edges[max_bin_idx]
+    bin_end = bin_edges[max_bin_idx + 1]
+
+    # Filter out values from the largest bin
+    filtered_diffs = [d for d in differences if d < bin_start or d >= bin_end]
+
+    # Generate filtered histogram
+    plt.figure(figsize=(10, 6))
+    plt.hist(filtered_diffs, bins=bins, edgecolor="black")
+    plt.title("Distribution of Score Differences (Excluding Largest Bin)")
+    plt.xlabel("Absolute Difference")
+    plt.ylabel("Count")
+    plt.savefig(output_filtered)
     plt.close()
 
 
@@ -116,10 +141,16 @@ def main():
         help="Second input jsonlines file with scores",
     )
     parser.add_argument(
-        "--histogram",
+        "--histogram-full",
         type=pathlib.Path,
-        default="score_differences_histogram.png",
-        help="Output file for histogram (default: score_differences_histogram.png)",
+        default="score_differences_full.png",
+        help="Output file for full histogram (default: score_differences_full.png)",
+    )
+    parser.add_argument(
+        "--histogram-filtered",
+        type=pathlib.Path,
+        default="score_differences_filtered.png",
+        help="Output file for filtered histogram without largest bin (default: score_differences_filtered.png)",
     )
     parser.add_argument(
         "--bins", type=int, default=50, help="Number of histogram bins (default: 50)"
@@ -127,7 +158,8 @@ def main():
     args = parser.parse_args()
 
     # Create output directory if needed
-    args.histogram.parent.mkdir(parents=True, exist_ok=True)
+    args.histogram_full.parent.mkdir(parents=True, exist_ok=True)
+    args.histogram_filtered.parent.mkdir(parents=True, exist_ok=True)
 
     # Read scores
     scores1 = read_scores(args.input1)
@@ -139,8 +171,10 @@ def main():
     # Calculate statistics
     stats = calculate_statistics(differences)
 
-    # Generate histogram
-    save_histogram(differences, args.histogram, args.bins)
+    # Generate histograms
+    save_histograms(
+        differences, args.histogram_full, args.histogram_filtered, args.bins
+    )
 
     # Report results
     print("\nAnalysis complete:")
@@ -149,7 +183,9 @@ def main():
     print("\nStatistics:")
     for metric, value in stats.items():
         print(f"{metric}: {value:.6f}")
-    print(f"\nHistogram saved to: {args.histogram}")
+    print(f"\nHistograms saved to:")
+    print(f"Full data: {args.histogram_full}")
+    print(f"Without largest bin: {args.histogram_filtered}")
 
 
 if __name__ == "__main__":
