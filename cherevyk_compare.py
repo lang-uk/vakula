@@ -69,14 +69,20 @@ def calculate_statistics(differences: List[float]) -> Dict[str, float]:
         differences: List of score differences.
 
     Returns:
-        Dictionary of statistical metrics.
+        Dictionary of statistical metrics including quartiles.
     """
     differences = np.array(differences)
+    quartiles = np.percentile(differences, [25, 50, 75])
+    iqr = quartiles[2] - quartiles[0]  # Interquartile range
+
     return {
         "min": float(np.min(differences)),
+        "q1": float(quartiles[0]),  # 25th percentile
+        "median": float(quartiles[1]),  # 50th percentile
+        "q3": float(quartiles[2]),  # 75th percentile
         "max": float(np.max(differences)),
         "mean": float(np.mean(differences)),
-        "median": float(np.median(differences)),
+        "iqr": float(iqr),  # Interquartile range
         "variance": float(np.var(differences)),
         "std": float(np.std(differences)),
     }
@@ -157,7 +163,7 @@ def main():
     )
     args = parser.parse_args()
 
-    # Create output directory if needed
+    # Create output directories if needed
     args.histogram_full.parent.mkdir(parents=True, exist_ok=True)
     args.histogram_filtered.parent.mkdir(parents=True, exist_ok=True)
 
