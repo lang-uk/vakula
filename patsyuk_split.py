@@ -41,11 +41,42 @@ def read_unique_records(
                 yield record
 
 
+def format_record(record: Dict[str, str], fmt: str) -> Dict[str, str]:
+    """
+    Since different models are using different libs we need to format the output
+    to be compatible with the inference scripts.
+
+    Args:
+        record: Translation record.
+        fmt: Output format for parallel sentences.
+    Returns:
+        Formatted record.
+    """
+    if fmt == "comet":
+        return record
+    elif fmt == "metricx24":
+        return {
+            "source": record["en"],
+            "hypothesis": record["uk"],
+            "reference": "",
+            "hash": record["hash"],
+        }
+    elif fmt == "metricx23":
+        return {
+            "source": record["en"],
+            "hypothesis": record["uk"],
+            "hash": record["hash"],
+        }
+    else:
+        raise ValueError(f"Invalid format: {fmt}")
+
+
 def write_split_files(
     records: Generator[Dict[str, str], None, None],
     output_pattern: str,
     records_per_file: int,
     start_index: int = 0,
+    fmt: str = "comet",
 ) -> int:
     """Write records to multiple files of specified size.
 
@@ -54,7 +85,7 @@ def write_split_files(
         output_pattern: Pattern for output filenames (must include {}).
         records_per_file: Number of records per output file.
         start_index: Starting index for file numbering.
-
+        fmt: Output format for parallel sentences.
     Returns:
         Number of files created.
     """
@@ -74,7 +105,9 @@ def write_split_files(
                 current_count = 0
                 file_index += 1
 
-            current_file.write(json.dumps(record, ensure_ascii=False) + "\n")
+            current_file.write(
+                json.dumps(format_record(record, fmt), ensure_ascii=False) + "\n"
+            )
             current_count += 1
             total_records += 1
 
@@ -113,6 +146,12 @@ def main():
         default=0,
         help="Starting index for file numbering (default: 0)",
     )
+    parser.add_argument(
+        "--format",
+        help="Output format for parallel sentences (default: comet)",
+        default="comet",
+        choices=["comet", "metricx24", "metricx23"],
+    )
     args = parser.parse_args()
 
     # Validate output pattern
@@ -130,6 +169,7 @@ def main():
         output_pattern=args.output_pattern,
         records_per_file=args.records_per_file,
         start_index=args.start_index,
+        fmt=args.format,
     )
 
     print("\nProcessing complete:")

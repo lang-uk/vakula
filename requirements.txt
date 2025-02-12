@@ -2,3 +2,6 @@ requests
 beautifulsoup4
 smart_open
 tqdm
+filelock
+torch
+unbabel-comet
