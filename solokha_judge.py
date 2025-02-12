@@ -156,6 +156,7 @@ def main():
             "Unbabel/wmt23-cometkiwi-da-xxl",
             "Unbabel/wmt22-cometkiwi-da",
             "Unbabel/wmt23-cometkiwi-da-xl",
+            "Unbabel/XCOMET-XXL",
         ],
         required=True,
         help="COMET model to use",
