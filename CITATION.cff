@@ -1,0 +1,58 @@
+cff-version: 1.2.0
+message: If you use this resource, please cite the paper below.
+title: 'vakula: parallel corpus quality-estimation framework'
+url: git@github.com:lang-uk/vakula
+type: dataset
+authors:
+- family-names: Chaplynskyi
+  given-names: Dmytro
+  orcid: https://orcid.org/0009-0000-0869-0999
+- family-names: Zakharov
+  given-names: Kyrylo
+preferred-citation:
+  type: conference-paper
+  title: 'A Framework for Large-Scale Parallel Corpus Evaluation: Ensemble Quality Estimation Models Versus
+    Human Assessment'
+  authors:
+  - family-names: Chaplynskyi
+    given-names: Dmytro
+    orcid: https://orcid.org/0009-0000-0869-0999
+  - family-names: Zakharov
+    given-names: Kyrylo
+  collection-title: Proceedings of the Fourth Ukrainian Natural Language Processing Workshop (UNLP 2025)
+  collection-type: proceedings
+  publisher:
+    name: Association for Computational Linguistics
+  conference:
+    name: Proceedings of the Fourth Ukrainian Natural Language Processing Workshop (UNLP 2025)
+  year: 2025
+  month: 7
+  start: 73
+  end: 85
+  url: https://aclanthology.org/2025.unlp-1.9/
+  doi: 10.18653/v1/2025.unlp-1.9
+  isbn: 979-8-89176-269-5
+references:
+- type: conference-paper
+  title: 'Professional Translators Versus Quality Estimation Models: Reliability and Agreement in English-Ukrainian
+    Translation Evaluation'
+  authors:
+  - family-names: Chaplynskyi
+    given-names: Dmytro
+    orcid: https://orcid.org/0009-0000-0869-0999
+  - family-names: Zakharov
+    given-names: Kyrylo
+  - family-names: Ivashkevych
+    given-names: Lesia
+  collection-title: Proceedings of the Fifth Ukrainian Natural Language Processing Conference (UNLP 2026)
+  collection-type: proceedings
+  publisher:
+    name: Association for Computational Linguistics
+  conference:
+    name: Proceedings of the Fifth Ukrainian Natural Language Processing Conference (UNLP 2026)
+  year: 2026
+  month: 5
+  start: 97
+  end: 107
+  url: https://aclanthology.org/2026.unlp-1.10/
+  isbn: 979-8-89176-359-3
